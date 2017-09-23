@@ -1,0 +1,27 @@
+{
+  "name": "hyperhtml-carousel",
+  "version": "0.0.1",
+  "description": "A simple responsive Carousel powered by hyperHTML and CSS Flexbox",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kidwm/hyperhtml-carousel.git"
+  },
+  "keywords": [
+    "hyperhtml",
+    "flexbox",
+    "carousel"
+  ],
+  "author": "Chen-Heng Chang",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kidwm/hyperhtml-carousel/issues"
+  },
+  "homepage": "https://github.com/kidwm/hyperhtml-carousel#readme",
+  "dependencies": {
+    "hyperhtml": "^1.8.0"
+  }
+}
