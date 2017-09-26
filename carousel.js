@@ -78,11 +78,6 @@ class Carousel extends Component {
 			}))
 		}));
 		this.setTimer();
-		this.onTransitionEnd = this.onTransitionEnd.bind(this);
-		this.onClick = this.onClick.bind(this);
-		this.onDraggingStart = this.onDraggingStart.bind(this);
-		this.onDraggingMove = this.onDraggingMove.bind(this);
-		this.onDraggingEnd = this.onDraggingEnd.bind(this);
 		this.goPrevSlide = this.goPrevSlide.bind(this);
 		this.goNextSlide = this.goNextSlide.bind(this);
 		this.switcher = props.slides.length > 1 && props.switcher ? new switcher({
@@ -93,15 +88,11 @@ class Carousel extends Component {
 			slides: props.slides,
 			changeSlide: this.changeSlide.bind(this)
 		}) : null;
-	}
-	onTransitionEnd() { // this will not be triggered when document.hidden
-		let {slide, slides} = this.state;
-		const count = slides.length;
-		if (slide == count + 1) slide = 1;
-		if (slide == 0) slide = count;
-		this.setState({slide, sliding: false});
-		this.setTimer();
-		this.state.slideDidChange && this.state.slideDidChange(slide);
+		this.eventHandler = {
+			handleEvent: event => {
+				this['on' + event.type](event);
+			}
+		}
 	}
 	setTimer() {
 		const interval = this.state.autoPlayInterval;
@@ -121,14 +112,28 @@ class Carousel extends Component {
 			this.setTimer();
 		}
 	}
-	onDraggingStart(event) {
+	ontransitionend() { // this will not be triggered when document.hidden
+		let {slide, slides} = this.state;
+		const count = slides.length;
+		if (slide == count + 1) slide = 1;
+		if (slide == 0) slide = count;
+		this.setState({slide, sliding: false});
+		this.setTimer();
+		this.state.slideDidChange && this.state.slideDidChange(slide);
+	}
+	onclick(event) {
+		if (Math.abs(this.state.offset) < 25) return; // trigger click in a small distance
+		event.preventDefault();
+		event.stopPropagation();
+	}
+	ontouchstart(event) {
 		if (event.touches)
 			this.setState({dragging: {
 				x: event.touches[0].pageX,
 				y: event.touches[0].pageY
 			}, offset: 0});
 	}
-	onDraggingMove(event) {
+	ontouchmove(event) {
 		const {sliding, dragging} = this.state;
 		if (sliding || !dragging || !event.touches) return;
 		const x = event.touches[0].pageX;
@@ -137,17 +142,15 @@ class Carousel extends Component {
 		if (Math.abs(y - dragging.y) < Math.abs(offset)) event.preventDefault();
 		this.setState({offset});
 	}
-	onDraggingEnd(event) {
+	ontouchend(event) {
 		const {slide, offset, dragging} = this.state;
 		if (!dragging) return;
 		this.setState({dragging: null});
 		if (Math.abs(offset) > this.slider.clientWidth / 5)
 			this.changeSlide(offset > 0 ? slide - 1 : slide + 1);
 	}
-	onClick(event) {
-		if (Math.abs(this.state.offset) < 25) return; // trigger click in a small distance
-		event.preventDefault();
-		event.stopPropagation();
+	ontouchcancel(event) {
+		this.ontouchend(event);
 	}
 	goPrevSlide() {
 		this.changeSlide(this.state.slide - 1);
@@ -179,12 +182,12 @@ class Carousel extends Component {
 			<div class="${className}" style="${wrapperStyle}">
 				<ul
 					style="${sliderStyle}"
-					ontransitionend=${this.onTransitionEnd}
-					onclick=${this.onClick}
-					ontouchstart=${this.onDraggingStart}
-					ontouchmove=${this.onDraggingMove}
-					ontouchend=${this.onDraggingEnd}
-					ontouchcancel=${this.onDraggingEnd}
+					ontransitionend=${this.eventHandler}
+					onclick=${this.eventHandler}
+					ontouchstart=${this.eventHandler}
+					ontouchmove=${this.eventHandler}
+					ontouchend=${this.eventHandler}
+					ontouchcancel=${this.eventHandler}
 				>
 					${state.items.map(item => item.render(slide))}
 				</ul>
