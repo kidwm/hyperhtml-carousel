@@ -196,7 +196,7 @@ class Carousel extends Component {
 			</div>
 		`;
 
-		this.slider = result.querySelector(`${className} > ul`);
+		this.slider = result.querySelector(`.${className} > ul`);
 
 		return result;
 	}
