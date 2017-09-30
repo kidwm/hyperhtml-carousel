@@ -44,12 +44,13 @@ class indicator extends Component {
 class slide extends Component {
 	constructor({index, html}) {
 		super();
-		this.setState({index, html});
+		this.setState({index});
+		this.content = wire()`${{html}}`
 	}
 	render(slide) {
 		const style = 'flex-basis: 100%; flex-shrink: 0';
 		return this.html`
-			<li style="${style}" aria-current=${slide === this.state.index}>${{html: this.state.html}}</li>
+			<li style="${style}" aria-current=${slide === this.state.index}>${this.content}</li>
 		`;
 	}
 }
@@ -77,7 +78,6 @@ class Carousel extends Component {
 				html
 			}))
 		}));
-		this.setTimer();
 		this.goPrevSlide = this.goPrevSlide.bind(this);
 		this.goNextSlide = this.goNextSlide.bind(this);
 		this.switcher = props.slides.length > 1 && props.switcher ? new switcher({
@@ -98,7 +98,7 @@ class Carousel extends Component {
 		const interval = this.state.autoPlayInterval;
 		if (this.state.slides.length > 1 && interval > 0) {
 			this.clearTimer();
-			this.timer = window.setInterval(this.changeSlide.bind(this, this.state.slide + 1), interval);
+			this.timer = window.setInterval(this.goNextSlide, interval);
 		}
 	}
 	clearTimer() {
@@ -108,9 +108,15 @@ class Carousel extends Component {
 		if (document.hidden) return; // run only when page is visible
 		if (this.state.slideWillChange && !this.state.slideWillChange(slide, this.state.slide)) return;
 		if (slide >= 0 && slide <= (this.state.slides.length + 1)) {
-			this.setState({slide, sliding: true, dragging: null});
+			this.setState({slide, sliding: true, dragging: null, offset: 0});
 			this.setTimer();
 		}
+	}
+	onconnected() {
+		this.setTimer();
+	}
+	ondisconnected() {
+		this.clearTimer();
 	}
 	ontransitionend() { // this will not be triggered when document.hidden
 		let {slide, slides} = this.state;
@@ -171,17 +177,19 @@ class Carousel extends Component {
 			margin: 0;
 			display: flex;
 			transition-property: ${sliding ? 'transform' : 'none'};
-			transform: ${slides.length > 1 ? (dragging && offset !== 0 ? 'translateX(calc(' + (offset * 1) + 'px - ' + slide * 100 + '%))' : 'translateX(-' + slide * 100 + '%)') : null};
+			transform: ${slides.length > 1 ? (offset !== 0 ? 'translateX(calc(' + (offset * 1) + 'px - ' + slide * 100 + '%))' : 'translateX(-' + slide * 100 + '%)') : null};
 			transition-duration: ${transitionDuration};
 			transition-timing-function: ${transitionTimingFunction};
+			contain: layout;
 			will-change: transform
 		`;
-		const slideStyle = 'flex-basis: 100%; flex-shrink: 0';
 
 		const result = this.html`
 			<div class="${className}" style="${wrapperStyle}">
 				<ul
 					style="${sliderStyle}"
+					onconnected=${this}
+					ondisconnected=${this}
 					ontransitionend=${this.eventHandler}
 					onclick=${this.eventHandler}
 					ontouchstart=${this.eventHandler}
