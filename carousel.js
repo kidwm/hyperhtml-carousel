@@ -84,15 +84,10 @@ class Carousel extends Component {
 			goPrevSlide: this.goPrevSlide,
 			goNextSlide: this.goNextSlide
 		}) : null;
-		this.indicator = props.slides.length > 1 && props.switcher ? new indicator({
+		this.indicator = props.slides.length > 1 && props.indicator ? new indicator({
 			slides: props.slides,
 			changeSlide: this.changeSlide.bind(this)
 		}) : null;
-		this.eventHandler = {
-			handleEvent: event => {
-				this['on' + event.type](event);
-			}
-		}
 	}
 	setTimer() {
 		const interval = this.state.autoPlayInterval;
@@ -149,11 +144,14 @@ class Carousel extends Component {
 		this.setState({offset});
 	}
 	ontouchend(event) {
+		const sliderWidth = event.currentTarget.clientWidth;
 		const {slide, offset, dragging} = this.state;
 		if (!dragging) return;
 		this.setState({dragging: null});
-		if (Math.abs(offset) > this.slider.clientWidth / 5)
+		if (Math.abs(offset) > sliderWidth / 5)
 			this.changeSlide(offset > 0 ? slide - 1 : slide + 1);
+		else
+			this.changeSlide(slide);
 	}
 	ontouchcancel(event) {
 		this.ontouchend(event);
@@ -184,18 +182,18 @@ class Carousel extends Component {
 			will-change: transform
 		`;
 
-		const result = this.html`
+		return this.html`
 			<div class="${className}" style="${wrapperStyle}">
 				<ul
 					style="${sliderStyle}"
 					onconnected=${this}
 					ondisconnected=${this}
-					ontransitionend=${this.eventHandler}
-					onclick=${this.eventHandler}
-					ontouchstart=${this.eventHandler}
-					ontouchmove=${this.eventHandler}
-					ontouchend=${this.eventHandler}
-					ontouchcancel=${this.eventHandler}
+					ontransitionend=${this}
+					onclick=${this}
+					ontouchstart=${this}
+					ontouchmove=${this}
+					ontouchend=${this}
+					ontouchcancel=${this}
 				>
 					${state.items.map(item => item.render(slide))}
 				</ul>
@@ -203,10 +201,6 @@ class Carousel extends Component {
 				${this.switcher}
 			</div>
 		`;
-
-		this.slider = result.querySelector(`.${className} > ul`);
-
-		return result;
 	}
 }
 
